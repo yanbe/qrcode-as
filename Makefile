@@ -1,0 +1,2 @@
+all:
+	mxmlc QRCodeReader.as
