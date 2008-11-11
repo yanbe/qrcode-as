@@ -4,25 +4,43 @@ package qrcode {
   import flash.utils.*;
 
   public class QRCodeDecoder {
-    public static function decode(pixels:BitmapData):DecodeResult {
-      var b:BitmapData = createBinaryImage(pixels);
-      var patterns:Object = FinderPattern.findPattern(b);
+    public static function decode(pixels:BitmapData, debug:BitmapData=null):DecodeResult {
+      var binaryPixels:BitmapData = createBinaryPixels(pixels);
+      var patterns:Object = FinderPattern.findPattern(binaryPixels);
       var result:DecodeResult = new DecodeResult();
-      result.across = patterns.across;
+      result.acrossLines = patterns.acrossLines;
       result.pos.leftTop = patterns.leftTop; 
       result.pos.rightTop = patterns.rightTop; 
       result.pos.leftBottom = patterns.leftBottom; 
-      result.text = "("+result.pos.leftTop.x+", "+result.pos.leftTop.y+") "+result.across.length;
-      result.debug = b;
+      result.text = "horizontal:"+result.acrossLines.horizontal.length+
+        " vertical:"+result.acrossLines.vertical.length;
+
+      if (debug!=null) {
+        debug.fillRect(new Rectangle(0,0,debug.width,debug.height), 0x00000000);
+        debug.draw(binaryPixels);
+        var line:Object;
+        var i:int;
+        for each(line in result.acrossLines.horizontal) {
+          for (i=0; i<line.offset; i++) {
+            debug.setPixel(line.endPoint.x-i, line.endPoint.y, 0x00ff00);
+          }
+        }
+        for each(line in result.acrossLines.vertical) {
+          for (i=0; i<line.offset; i++) {
+            debug.setPixel(line.endPoint.x, line.endPoint.y-i, 0x00ff00);
+          }
+        }
+      }
+
       return result;
     }
 
-    private static function createBinaryImage(pixels:BitmapData):BitmapData {
+    private static function createBinaryPixels(pixels:BitmapData):BitmapData {
       var nDivision:int = 4;
-      var b:BitmapData = new BitmapData(pixels.width, pixels.height);
+      var binaryPixels:BitmapData = new BitmapData(pixels.width, pixels.height);
 
-      var areaWidth:int=b.width/nDivision;
-      var areaHeight:int=b.height/nDivision;
+      var areaWidth:int=binaryPixels.width/nDivision;
+      var areaHeight:int=binaryPixels.height/nDivision;
       
       for (var ay:int=0; ay<nDivision; ay++) {
         for (var ax:int=0; ax<nDivision; ax++) {
@@ -41,11 +59,11 @@ package qrcode {
           var color:uint = 0x00000000;
           var maskColor:uint = 0x000000ff;
         
-          b.threshold(pixels, rectangle, new Point(ax*areaWidth, ay*areaHeight), "<=", threshold, color,
-              maskColor, false);
+          binaryPixels.threshold(pixels, rectangle, new Point(ax*areaWidth,
+                ay*areaHeight), "<=", threshold, color, maskColor, false);
         }
       }
-      return b;
+      return binaryPixels;
     }
   }
 }

@@ -7,7 +7,7 @@ package qrcode {
     public var errorCorrectionLevel:uint;
     public var text:String;
     public var debug:BitmapData;
-    public var across:Array;
+    public var acrossLines:Object;
     public var pos:Object = {leftTop:Point, rightTop:Point,
                              leftBottom:Point, rightBottom:Point};
   }
