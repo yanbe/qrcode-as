@@ -24,24 +24,41 @@ package qrcode {
           }
         }
       }
-      var centersHorizontal:Array = findTop3ClusterCenters(linesAcrossHorizontally);
-      var centersVertical:Array = findTop3ClusterCenters(linesAcrossVertically);
+      var horizontal3Centers:Array = findTop3ClusterCenters(linesAcrossHorizontally);
+      var vertical3Centers:Array = findTop3ClusterCenters(linesAcrossVertically);
+
       if (debug!=null) {
-        for each(line in centersHorizontal) {
+        for each(line in horizontal3Centers) {
           for (i=0; i<line.offset; i++) {
             debug.setPixel(line.endPoint.x-i, line.endPoint.y, 0xff0000);
           }
         }
-        for each(line in centersVertical) {
+        for each(line in vertical3Centers) {
           for (i=0; i<line.offset; i++) {
             debug.setPixel(line.endPoint.x, line.endPoint.y-i, 0xff0000);
           }
         }
       }
 
-      return {leftTop: new Point(10,10),
-        rightTop: new Point(200,10),
-        leftBottom: new Point(10,200)
+      var centers:Array = findCenters(horizontal3Centers, vertical3Centers);
+
+      if (debug!=null && centers.length==3) {
+        var triangle:Shape = new Shape();
+        triangle.graphics.beginFill(0x0000ff);
+        triangle.graphics.moveTo(centers[0].x, centers[0].y);
+        triangle.graphics.lineTo(centers[1].x, centers[1].y);
+        triangle.graphics.lineTo(centers[2].x, centers[2].y);
+        triangle.graphics.lineTo(centers[0].x, centers[0].y);
+        debug.draw(triangle);
+      }
+
+      centers = orderCenters(centers); 
+
+      trace(centers);
+
+      return {leftTop: centers[0],
+        rightTop: centers[1],
+        leftBottom: centers[2]
       };
     }
 
@@ -125,22 +142,42 @@ package qrcode {
 
       clusters.sortOn("length", Array.DESCENDING | Array.NUMERIC);
 
-      var centers:Array = new Array();
+      var clusterCenters:Array = new Array();
       if (clusters.length>=3) {
-        for (i=0; i<clusters.length && centers.length<3; i++) {
+        for (i=0; i<clusters.length && clusterCenters.length<3; i++) {
           var candidate:Object = clusters[i][int(clusters[i].length/2)];
           var j:int=0;
-          for (j=0; j<centers.length; j++) {
-            if (Point.distance(candidate.endPoint, centers[j].endPoint) < 3) {
+          for (j=0; j<clusterCenters.length; j++) {
+            // avoid too near points
+            if (Point.distance(candidate.endPoint, clusterCenters[j].endPoint) < 3) {
               break;
             }
           }
-          if (j==centers.length) {
-            centers.push(candidate);
+          if (j==clusterCenters.length) {
+            clusterCenters.push(candidate);
           }
         }
       }
 
+      return clusterCenters;
+    }
+
+    private static function findCenters(horizontal3Centers:Array,
+        vertical3Centers:Array):Array {
+      var centers:Array = new Array();
+      for each(var h:Object in horizontal3Centers) {
+        for each(var v:Object in vertical3Centers) {
+          if (Point.distance(h.endPoint, v.endPoint) < h.offset) {
+            centers.push(new Point(h.endPoint.x-h.offset/2,
+                  v.endPoint.y-v.offset/2));
+            break;
+          }
+        }
+      }
+      return centers;
+    }
+
+    private static function orderCenters(centers:Array): Array {
       return centers;
     }
   }
