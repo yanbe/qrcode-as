@@ -33,20 +33,19 @@ package qrcode {
       }
 
       var centers:Array = findCenters(horizontal3Centers, vertical3Centers);
+      centers = orderCenters(centers); 
 
       if (debug!=null && centers.length==3) {
         var triangle:Shape = new Shape();
         triangle.graphics.lineStyle(1, 0x0000ff);
         triangle.graphics.moveTo(centers[0].x, centers[0].y);
         triangle.graphics.lineTo(centers[1].x, centers[1].y);
+        triangle.graphics.lineStyle(1, 0xff0000);
         triangle.graphics.lineTo(centers[2].x, centers[2].y);
+        triangle.graphics.lineStyle(1, 0x0000ff);
         triangle.graphics.lineTo(centers[0].x, centers[0].y);
         debug.draw(triangle);
       }
-
-      centers = orderCenters(centers); 
-
-      trace(centers);
 
       return {leftTop: centers[0],
         rightTop: centers[1],
@@ -183,6 +182,28 @@ package qrcode {
     }
 
     private static function orderCenters(centers:Array): Array {
+      var longest:Object = {index:0, length:0};
+      for (var i:int=0; i<centers.length; i++) {
+        var currentLength:int = Point.distance(centers[i],
+            centers[(i+1)%centers.length]);
+        if (currentLength>longest.length) {
+          longest.index=i;
+          longest.length=currentLength;
+        }
+      }
+      switch (longest.index) {
+        case 0:
+          centers.unshift(centers.pop());
+          break;
+        case 1:
+          break;
+        case 2:
+          centers.push(centers.shift());
+          break;
+        default:
+          break;
+      }
+
       return centers;
     }
   }
