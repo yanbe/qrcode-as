@@ -4,33 +4,19 @@ package qrcode {
   import flash.utils.*;
 
   public class QRCodeDecoder {
-    public static function decode(pixels:BitmapData, debug:BitmapData=null):DecodeResult {
+    public static function decode(pixels:BitmapData,
+        debug:BitmapData=null):DecodeResult {
       var binaryPixels:BitmapData = createBinaryPixels(pixels);
-      var patterns:Object = FinderPattern.findPattern(binaryPixels);
+      debug.fillRect(new Rectangle(0,0,debug.width,debug.height), 0x00000000);
+      debug.draw(binaryPixels);
+
+      var patterns:Object = FinderPattern.findPattern(binaryPixels, debug);
+
       var result:DecodeResult = new DecodeResult();
-      result.acrossLines = patterns.acrossLines;
       result.pos.leftTop = patterns.leftTop; 
       result.pos.rightTop = patterns.rightTop; 
       result.pos.leftBottom = patterns.leftBottom; 
-      result.text = "horizontal:"+result.acrossLines.horizontal.length+
-        " vertical:"+result.acrossLines.vertical.length;
-
-      if (debug!=null) {
-        debug.fillRect(new Rectangle(0,0,debug.width,debug.height), 0x00000000);
-        debug.draw(binaryPixels);
-        var line:Object;
-        var i:int;
-        for each(line in result.acrossLines.horizontal) {
-          for (i=0; i<line.offset; i++) {
-            debug.setPixel(line.endPoint.x-i, line.endPoint.y, 0x00ff00);
-          }
-        }
-        for each(line in result.acrossLines.vertical) {
-          for (i=0; i<line.offset; i++) {
-            debug.setPixel(line.endPoint.x, line.endPoint.y-i, 0x00ff00);
-          }
-        }
-      }
+      result.text = result.pos.leftTop.toString();
 
       return result;
     }
