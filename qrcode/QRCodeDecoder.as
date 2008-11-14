@@ -16,7 +16,7 @@ package qrcode {
       result.pos.leftTop = patterns.leftTop; 
       result.pos.rightTop = patterns.rightTop; 
       result.pos.leftBottom = patterns.leftBottom; 
-      result.text = result.pos.leftTop.toString();
+      result.text = "";
 
       return result;
     }
