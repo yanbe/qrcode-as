@@ -6,16 +6,45 @@ package qrcode {
     private static const HORIZONTAL:int = 0;
     private static const VERTICAL:int = 1;
 
-    public static function findPattern(pixels:BitmapData):Object {
+    public static function findPattern(pixels:BitmapData,
+        debug:BitmapData=null):Object {
       var linesAcrossHorizontally:Array = findLinesAcross(pixels, HORIZONTAL);
       var linesAcrossVertically:Array = findLinesAcross(pixels, VERTICAL);
+      var line:Object;
+      var i:int;
+      if (debug!=null) {
+        for each(line in linesAcrossHorizontally) {
+          for (i=0; i<line.offset; i++) {
+            debug.setPixel(line.endPoint.x-i, line.endPoint.y, 0x00ff00);
+          }
+        }
+        for each(line in linesAcrossVertically) {
+          for (i=0; i<line.offset; i++) {
+            debug.setPixel(line.endPoint.x, line.endPoint.y-i, 0x00ff00);
+          }
+        }
+      }
+      var centersHorizontal:Array = findTop3ClusterCenters(linesAcrossHorizontally);
+      var centersVertical:Array = findTop3ClusterCenters(linesAcrossVertically);
+      if (debug!=null) {
+        for each(line in centersHorizontal) {
+          for (i=0; i<line.offset; i++) {
+            debug.setPixel(line.endPoint.x-i, line.endPoint.y, 0xff0000);
+          }
+        }
+        for each(line in centersVertical) {
+          for (i=0; i<line.offset; i++) {
+            debug.setPixel(line.endPoint.x, line.endPoint.y-i, 0xff0000);
+          }
+        }
+      }
+
       return {leftTop: new Point(10,10),
         rightTop: new Point(200,10),
-        leftBottom: new Point(10,200),
-        acrossLines: {vertical: linesAcrossVertically,
-                      horizontal: linesAcrossHorizontally}
+        leftBottom: new Point(10,200)
       };
     }
+
     public static function findLinesAcross(pixels:BitmapData, 
         direction:int):Array {
       var MAX_SIDE_PRIMARY:int;
@@ -62,7 +91,8 @@ package qrcode {
                   }
                 }
                 if (i==recent.length) {
-                  var endPoint:Point = direction==HORIZONTAL ? new Point(a-1,b) : 
+                  var endPoint:Point = direction==HORIZONTAL ? 
+                    new Point(a-1,b) : 
                     new Point(b,a-1);
                   linesAcross.push({endPoint:endPoint, offset:recentSum});
                 }
@@ -76,6 +106,42 @@ package qrcode {
         length = 0;
       }
       return linesAcross;
+    }
+
+    public static function findTop3ClusterCenters(linesAcross:Array): Array {
+      var clusters:Array = new Array();
+      var i:int;
+      for each (var target:Object in linesAcross) {
+        for (i=0; i < clusters.length; i++) {
+          var lastElement:Object = clusters[i][clusters[i].length-1];
+          if (Point.distance(lastElement.endPoint, target.endPoint) < 3) {
+            clusters[i].push(target);
+          }
+        }
+        if (i == clusters.length) {
+          clusters.push(new Array(target));
+        }
+      }  
+
+      clusters.sortOn("length", Array.DESCENDING | Array.NUMERIC);
+
+      var centers:Array = new Array();
+      if (clusters.length>=3) {
+        for (i=0; i<clusters.length && centers.length<3; i++) {
+          var candidate:Object = clusters[i][int(clusters[i].length/2)];
+          var j:int=0;
+          for (j=0; j<centers.length; j++) {
+            if (Point.distance(candidate.endPoint, centers[j].endPoint) < 3) {
+              break;
+            }
+          }
+          if (j==centers.length) {
+            centers.push(candidate);
+          }
+        }
+      }
+
+      return centers;
     }
   }
 }
