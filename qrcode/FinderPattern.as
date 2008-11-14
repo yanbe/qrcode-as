@@ -14,29 +14,21 @@ package qrcode {
       var i:int;
       if (debug!=null) {
         for each(line in linesAcrossHorizontally) {
-          for (i=0; i<line.offset; i++) {
-            debug.setPixel(line.endPoint.x-i, line.endPoint.y, 0x00ff00);
-          }
+          drawLine(debug, line, 0x00ff00, HORIZONTAL); 
         }
-        for each(line in linesAcrossVertically) {
-          for (i=0; i<line.offset; i++) {
-            debug.setPixel(line.endPoint.x, line.endPoint.y-i, 0x00ff00);
-          }
+        for each(line in linesAcrossVertically) { 
+          drawLine(debug, line, 0x00ff00, VERTICAL); 
         }
       }
       var horizontal3Centers:Array = findTop3ClusterCenters(linesAcrossHorizontally);
       var vertical3Centers:Array = findTop3ClusterCenters(linesAcrossVertically);
 
       if (debug!=null) {
-        for each(line in horizontal3Centers) {
-          for (i=0; i<line.offset; i++) {
-            debug.setPixel(line.endPoint.x-i, line.endPoint.y, 0xff0000);
-          }
+        for each(line in horizontal3Centers) { 
+          drawLine(debug, line, 0xff0000, HORIZONTAL); 
         }
-        for each(line in vertical3Centers) {
-          for (i=0; i<line.offset; i++) {
-            debug.setPixel(line.endPoint.x, line.endPoint.y-i, 0xff0000);
-          }
+        for each(line in vertical3Centers) { 
+          drawLine(debug, line, 0xff0000, VERTICAL); 
         }
       }
 
@@ -44,7 +36,7 @@ package qrcode {
 
       if (debug!=null && centers.length==3) {
         var triangle:Shape = new Shape();
-        triangle.graphics.beginFill(0x0000ff);
+        triangle.graphics.lineStyle(1, 0x0000ff);
         triangle.graphics.moveTo(centers[0].x, centers[0].y);
         triangle.graphics.lineTo(centers[1].x, centers[1].y);
         triangle.graphics.lineTo(centers[2].x, centers[2].y);
@@ -60,6 +52,19 @@ package qrcode {
         rightTop: centers[1],
         leftBottom: centers[2]
       };
+    }
+
+    private static function drawLine(debug:BitmapData, line:Object,
+        color:uint, direction:int):void {
+      var l:Shape = new Shape();
+      l.graphics.lineStyle(1, color);
+      l.graphics.moveTo(line.endPoint.x, line.endPoint.y);
+      if (direction==HORIZONTAL) {
+        l.graphics.lineTo(line.endPoint.x-line.offset, line.endPoint.y);
+      } else {
+        l.graphics.lineTo(line.endPoint.x, line.endPoint.y-line.offset);
+      }
+      debug.draw(l);
     }
 
     private static function findLinesAcross(pixels:BitmapData, 
