@@ -1,8 +1,12 @@
 package qrcode {
   import flash.display.*;
   import flash.geom.*;
+  import flash.errors.*;
 
   public class FinderPattern {
+    /*
+      Note: Read JIS-X-0510:2004 p52-53 for detail
+    */
     private static const HORIZONTAL:int = 0;
     private static const VERTICAL:int = 1;
 
@@ -32,26 +36,37 @@ package qrcode {
         }
       }
 
-      var patterns:Array = findPositionDetectionPatterns(horizontalHints,
+      var patterns:Array = findPositionDetectionPatterns(horizontalHints, 
           verticalHints);
-       patterns= orderPositionDetectionPatterns(patterns); 
 
-      if (debug!=null && patterns.length==3) {
-        var triangle:Shape = new Shape();
-        triangle.graphics.lineStyle(1, 0x0000ff);
-        triangle.graphics.moveTo(patterns[0].x, patterns[0].y);
-        triangle.graphics.lineTo(patterns[1].x, patterns[1].y);
-        triangle.graphics.lineStyle(1, 0xff0000);
-        triangle.graphics.lineTo(patterns[2].x, patterns[2].y);
-        triangle.graphics.lineStyle(1, 0x0000ff);
-        triangle.graphics.lineTo(patterns[0].x, patterns[0].y);
-        debug.draw(triangle);
+      if (patterns.length==3) {
+        patterns = orderPositionDetectionPatterns(patterns); 
+
+        if (debug!=null) {
+          var triangle:Shape = new Shape();
+          triangle.graphics.lineStyle(1, 0x0000ff);
+          triangle.graphics.moveTo(patterns[0].center.x, patterns[0].center.y);
+          triangle.graphics.lineTo(patterns[1].center.x, patterns[1].center.y);
+          triangle.graphics.lineStyle(1, 0xff0000);
+          triangle.graphics.lineTo(patterns[2].center.x, patterns[2].center.y);
+          triangle.graphics.lineStyle(1, 0x0000ff);
+          triangle.graphics.lineTo(patterns[0].center.x, patterns[0].center.y);
+          debug.draw(triangle);
+        }
+
+        // calc rough version. based on JIS-X-0510:2004 p.53
+        var x:Number = (patterns[0].length+patterns[1].length)/14;
+        var v:int = (Point.distance(patterns[0].center,
+              patterns[1].center)/x-10)/4;
+
+        return {leftTop: patterns[0].center,
+          rightTop: patterns[1].center,
+          leftBottom: patterns[2].center,
+          roughVersion: v
+        };
+      } else {
+        throw new IOError("finder pattern did not found");
       }
-
-      return {leftTop: patterns[0],
-        rightTop: patterns[1],
-        leftBottom: patterns[2]
-      };
     }
 
     private static function drawLine(debug:BitmapData, line:Object,
@@ -130,7 +145,8 @@ package qrcode {
       return linesAcross;
     }
 
-    private static function findPositionDetectionPatternHints(linesAcross:Array): Array {
+    private static function findPositionDetectionPatternHints(
+        linesAcross:Array): Array {
       var clusters:Array = new Array();
       var i:int;
       for each (var target:Object in linesAcross) {
@@ -167,14 +183,14 @@ package qrcode {
       return clusterCenters;
     }
 
-    private static function findPositionDetectionPatterns(horizontal3Centers:Array,
-        vertical3Centers:Array):Array {
+    private static function findPositionDetectionPatterns(horizontalHints:Array,
+        verticalHints:Array):Array {
       var centers:Array = new Array();
-      for each(var h:Object in horizontal3Centers) {
-        for each(var v:Object in vertical3Centers) {
+      for each(var h:Object in horizontalHints) {
+        for each(var v:Object in verticalHints) {
           if (Point.distance(h.endPoint, v.endPoint) < h.offset) {
-            centers.push(new Point(h.endPoint.x-h.offset/2,
-                  v.endPoint.y-v.offset/2));
+            centers.push({center:new Point(h.endPoint.x-h.offset/2,
+                  v.endPoint.y-v.offset/2), length:h.offset});
             break;
           }
         }
@@ -185,8 +201,8 @@ package qrcode {
     private static function orderPositionDetectionPatterns(centers:Array): Array {
       var longest:Object = {index:0, length:0};
       for (var i:int=0; i<centers.length; i++) {
-        var currentLength:int = Point.distance(centers[i],
-            centers[(i+1)%centers.length]);
+        var currentLength:int = Point.distance(centers[i].center,
+            centers[(i+1)%centers.length].center);
         if (currentLength>longest.length) {
           longest.index=i;
           longest.length=currentLength;

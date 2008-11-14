@@ -2,6 +2,7 @@ package qrcode {
   import flash.display.*;
   import flash.geom.*;
   import flash.utils.*;
+  import flash.errors.*;
 
   public class QRCodeDecoder {
     public static function decode(pixels:BitmapData,
@@ -10,13 +11,17 @@ package qrcode {
       debug.fillRect(new Rectangle(0,0,debug.width,debug.height), 0x00000000);
       debug.draw(binaryPixels);
 
-      var patterns:Object = FinderPattern.findPattern(binaryPixels, debug);
-
       var result:DecodeResult = new DecodeResult();
-      result.pos.leftTop = patterns.leftTop; 
-      result.pos.rightTop = patterns.rightTop; 
-      result.pos.leftBottom = patterns.leftBottom; 
-      result.text = "";
+
+      try {
+        var finderPattern:Object = FinderPattern.findPattern(binaryPixels, debug);
+        result.pos.leftTop = finderPattern.leftTop; 
+        result.pos.rightTop = finderPattern.rightTop; 
+        result.pos.leftBottom = finderPattern.leftBottom; 
+        result.text = "roughVersion: "+finderPattern.roughVersion;
+      } catch(errorObject:IOError) {
+        result.text = "error: "+errorObject.message;
+      }
 
       return result;
     }
