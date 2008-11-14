@@ -45,7 +45,7 @@ package qrcode {
       };
     }
 
-    public static function findLinesAcross(pixels:BitmapData, 
+    private static function findLinesAcross(pixels:BitmapData, 
         direction:int):Array {
       var MAX_SIDE_PRIMARY:int;
       var MAX_SIDE_SECONDARY:int;
@@ -108,7 +108,7 @@ package qrcode {
       return linesAcross;
     }
 
-    public static function findTop3ClusterCenters(linesAcross:Array): Array {
+    private static function findTop3ClusterCenters(linesAcross:Array): Array {
       var clusters:Array = new Array();
       var i:int;
       for each (var target:Object in linesAcross) {
