@@ -20,36 +20,37 @@ package qrcode {
           drawLine(debug, line, 0x00ff00, VERTICAL); 
         }
       }
-      var horizontal3Centers:Array = findTop3ClusterCenters(linesAcrossHorizontally);
-      var vertical3Centers:Array = findTop3ClusterCenters(linesAcrossVertically);
+      var horizontalHints:Array = findPositionDetectionPatternHints(linesAcrossHorizontally);
+      var verticalHints:Array = findPositionDetectionPatternHints(linesAcrossVertically);
 
       if (debug!=null) {
-        for each(line in horizontal3Centers) { 
+        for each(line in horizontalHints) { 
           drawLine(debug, line, 0xff0000, HORIZONTAL); 
         }
-        for each(line in vertical3Centers) { 
+        for each(line in verticalHints) { 
           drawLine(debug, line, 0xff0000, VERTICAL); 
         }
       }
 
-      var centers:Array = findCenters(horizontal3Centers, vertical3Centers);
-      centers = orderCenters(centers); 
+      var patterns:Array = findPositionDetectionPatterns(horizontalHints,
+          verticalHints);
+       patterns= orderPositionDetectionPatterns(patterns); 
 
-      if (debug!=null && centers.length==3) {
+      if (debug!=null && patterns.length==3) {
         var triangle:Shape = new Shape();
         triangle.graphics.lineStyle(1, 0x0000ff);
-        triangle.graphics.moveTo(centers[0].x, centers[0].y);
-        triangle.graphics.lineTo(centers[1].x, centers[1].y);
+        triangle.graphics.moveTo(patterns[0].x, patterns[0].y);
+        triangle.graphics.lineTo(patterns[1].x, patterns[1].y);
         triangle.graphics.lineStyle(1, 0xff0000);
-        triangle.graphics.lineTo(centers[2].x, centers[2].y);
+        triangle.graphics.lineTo(patterns[2].x, patterns[2].y);
         triangle.graphics.lineStyle(1, 0x0000ff);
-        triangle.graphics.lineTo(centers[0].x, centers[0].y);
+        triangle.graphics.lineTo(patterns[0].x, patterns[0].y);
         debug.draw(triangle);
       }
 
-      return {leftTop: centers[0],
-        rightTop: centers[1],
-        leftBottom: centers[2]
+      return {leftTop: patterns[0],
+        rightTop: patterns[1],
+        leftBottom: patterns[2]
       };
     }
 
@@ -129,7 +130,7 @@ package qrcode {
       return linesAcross;
     }
 
-    private static function findTop3ClusterCenters(linesAcross:Array): Array {
+    private static function findPositionDetectionPatternHints(linesAcross:Array): Array {
       var clusters:Array = new Array();
       var i:int;
       for each (var target:Object in linesAcross) {
@@ -166,7 +167,7 @@ package qrcode {
       return clusterCenters;
     }
 
-    private static function findCenters(horizontal3Centers:Array,
+    private static function findPositionDetectionPatterns(horizontal3Centers:Array,
         vertical3Centers:Array):Array {
       var centers:Array = new Array();
       for each(var h:Object in horizontal3Centers) {
@@ -181,7 +182,7 @@ package qrcode {
       return centers;
     }
 
-    private static function orderCenters(centers:Array): Array {
+    private static function orderPositionDetectionPatterns(centers:Array): Array {
       var longest:Object = {index:0, length:0};
       for (var i:int=0; i<centers.length; i++) {
         var currentLength:int = Point.distance(centers[i],
