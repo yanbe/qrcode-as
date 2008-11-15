@@ -13,12 +13,19 @@ package qrcode {
 
       var result:DecodeResult = new DecodeResult();
 
+      var finderPattern:Object;
       try {
-        var finderPattern:Object = FinderPattern.findPattern(binaryPixels, debug);
+        finderPattern = FinderPattern.findPattern(binaryPixels, debug);
         result.pos.leftTop = finderPattern.leftTop; 
         result.pos.rightTop = finderPattern.rightTop; 
         result.pos.leftBottom = finderPattern.leftBottom; 
         result.text = "roughVersion: "+finderPattern.roughVersion;
+        if (finderPattern.roughVersion<=6) {
+          var sampledPixels:BitmapData = SamplingGrid.samplePixels(pixels, 
+              finderPattern, null, debug);
+        } else {
+          result.text = "error: version 7 or higher is not supported yet";
+        }
       } catch(errorObject:IOError) {
         result.text = "error: "+errorObject.message;
       }
