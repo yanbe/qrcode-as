@@ -24,8 +24,10 @@ package qrcode {
           drawLine(debug, line, 0x00ff00, VERTICAL); 
         }
       }
-      var horizontalHints:Array = findPositionDetectionPatternHints(linesAcrossHorizontally);
-      var verticalHints:Array = findPositionDetectionPatternHints(linesAcrossVertically);
+      var horizontalHints:Array = 
+        findPositionDetectionPatternHints(linesAcrossHorizontally);
+      var verticalHints:Array = 
+        findPositionDetectionPatternHints(linesAcrossVertically);
 
       if (debug!=null) {
         for each(line in horizontalHints) { 
@@ -41,27 +43,32 @@ package qrcode {
 
       if (patterns.length==3) {
         patterns = orderPositionDetectionPatterns(patterns); 
+        trace(patterns[0].center, patterns[1].center, patterns[2].center);
 
         if (debug!=null) {
           var triangle:Shape = new Shape();
-          triangle.graphics.lineStyle(1, 0x0000ff);
           triangle.graphics.moveTo(patterns[0].center.x, patterns[0].center.y);
+          triangle.graphics.lineStyle(1, 0x0000ff);
           triangle.graphics.lineTo(patterns[1].center.x, patterns[1].center.y);
           triangle.graphics.lineStyle(1, 0xff0000);
           triangle.graphics.lineTo(patterns[2].center.x, patterns[2].center.y);
-          triangle.graphics.lineStyle(1, 0x0000ff);
           triangle.graphics.lineTo(patterns[0].center.x, patterns[0].center.y);
           debug.draw(triangle);
         }
 
-        // calc rough version. based on JIS-X-0510:2004 p.53
-        var x:Number = (patterns[0].length+patterns[1].length)/14;
-        var v:int = (Point.distance(patterns[0].center,
-              patterns[1].center)/x-10)/4;
-
+        // adhoc enhancement for roughVersion calculation 
+        var d:Number = Point.distance(patterns[0].center, patterns[1].center);
+        var cos:Number = Math.abs(patterns[0].center.x-patterns[1].center.x)/d;
+        var sin:Number = Math.abs(patterns[0].center.y-patterns[2].center.y)/d;
+        var x:Number = (patterns[0].width+patterns[1].width)*cos/14;
+        var y:Number = (patterns[0].height+patterns[2].height)*cos/14;
+        var d:Number = r;
+        var v:int = ((d/x+d/y)/2-10)/4;
         return {leftTop: patterns[0].center,
           rightTop: patterns[1].center,
           leftBottom: patterns[2].center,
+          moduleWidth: x,
+          moduleHeight: y,
           roughVersion: v
         };
       } else {
@@ -190,7 +197,7 @@ package qrcode {
         for each(var v:Object in verticalHints) {
           if (Point.distance(h.endPoint, v.endPoint) < h.offset) {
             centers.push({center:new Point(h.endPoint.x-h.offset/2,
-                  v.endPoint.y-v.offset/2), length:h.offset});
+                  v.endPoint.y-v.offset/2), width:h.offset, height:v.offset});
             break;
           }
         }
@@ -208,20 +215,22 @@ package qrcode {
           longest.length=currentLength;
         }
       }
-      switch (longest.index) {
-        case 0:
-          centers.unshift(centers.pop());
-          break;
-        case 1:
-          break;
-        case 2:
-          centers.push(centers.shift());
-          break;
-        default:
-          break;
-      }
+      var a:Object = centers[longest.index];
+      var b:Object = centers[(longest.index+1)%centers.length];
+      var topLeft:Object = centers[(longest.index+2)%centers.length];
 
-      return centers;
+      var topRight:Object;
+      var bottomLeft:Object;
+      // TODO: complete all corner cases
+      if (a.center.x>b.center.x) {
+        topRight = a;
+        bottomLeft = b;
+      } else {
+        topRight = b;
+        bottomLeft = a;
+      }
+      
+      return new Array(topLeft, topRight, bottomLeft);
     }
   }
 }
