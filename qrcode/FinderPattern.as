@@ -7,8 +7,8 @@ package qrcode {
     /*
       Note: Read JIS-X-0510:2004 p52-53 for detail
     */
-    private static const HORIZONTAL:int = 0;
-    private static const VERTICAL:int = 1;
+    public static const HORIZONTAL:int = 0;
+    public static const VERTICAL:int = 1;
 
     public static function findPattern(pixels:BitmapData,
         debug:BitmapData=null):Object {
@@ -43,7 +43,6 @@ package qrcode {
 
       if (patterns.length==3) {
         patterns = orderPositionDetectionPatterns(patterns); 
-        trace(patterns[0].center, patterns[1].center, patterns[2].center);
 
         if (debug!=null) {
           var triangle:Shape = new Shape();
@@ -61,21 +60,20 @@ package qrcode {
         var cos:Number = Math.abs(patterns[0].center.x-patterns[1].center.x)/d;
         var sin:Number = Math.abs(patterns[0].center.y-patterns[2].center.y)/d;
         var x:Number = (patterns[0].width+patterns[1].width)*cos/14;
-        var y:Number = (patterns[0].height+patterns[2].height)*cos/14;
-        var v:int = ((d/x+d/y)/2-10)/4;
+        var v:int = (d/x-10)/4;
         return {leftTop: patterns[0].center,
-          rightTop: patterns[1].center,
-          leftBottom: patterns[2].center,
-          moduleWidth: x,
-          moduleHeight: y,
-          roughVersion: v
+                rightTop: patterns[1].center,
+                leftBottom: patterns[2].center,
+                roughVersion: v,
+                moduleWidth: x,
+                sideLength: 17+v*4
         };
       } else {
         throw new IOError("finder pattern did not found");
       }
     }
 
-    private static function drawLine(debug:BitmapData, line:Object,
+    public static function drawLine(debug:BitmapData, line:Object,
         color:uint, direction:int):void {
       var l:Shape = new Shape();
       l.graphics.lineStyle(1, color);
