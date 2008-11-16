@@ -62,7 +62,6 @@ package qrcode {
         var sin:Number = Math.abs(patterns[0].center.y-patterns[2].center.y)/d;
         var x:Number = (patterns[0].width+patterns[1].width)*cos/14;
         var y:Number = (patterns[0].height+patterns[2].height)*cos/14;
-        var d:Number = r;
         var v:int = ((d/x+d/y)/2-10)/4;
         return {leftTop: patterns[0].center,
           rightTop: patterns[1].center,
