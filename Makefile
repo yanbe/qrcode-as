@@ -1,2 +1,2 @@
-all:
-	rascut -c "-debug=true" -s -l "/Users/yanbe/Library/Preferences/Macromedia/Flash Player/Logs/flashlog.txt" QRCodeReader.as
+run:
+	rascut QRCodeReader.as -s -c "-debug=true" -l "~/Library/Preferences/macromedia/Flash Player/Logs/flashlog.txt"
