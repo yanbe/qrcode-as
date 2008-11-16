@@ -20,8 +20,15 @@ package qrcode {
         result.pos.leftBottom = finderPattern.leftBottom; 
         result.text = "roughVersion: "+finderPattern.roughVersion;
         if (finderPattern.roughVersion<=6) {
+          var alignmentPattern:Array;
+          if (finderPattern.roughVersion>=2) {
+            alignmentPattern = AlignmentPattern.findPattern(binaryPixels,
+                                                            finderPattern, debug);
+          }
           var sampledPixels:BitmapData =
-            SamplingGrid.samplePixels(pixels, finderPattern, null, debug);
+            SamplingGrid.samplePixels(pixels, finderPattern, alignmentPattern,
+                                      debug);
+
           var doubleScale:Matrix = new Matrix();
           doubleScale.scale(2, 2);
           debug.draw(sampledPixels, doubleScale);
